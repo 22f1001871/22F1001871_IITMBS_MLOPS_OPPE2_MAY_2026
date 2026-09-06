@@ -6,13 +6,10 @@ on:
       - main
 
 jobs:
-
   build-and-deploy:
-
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -31,7 +28,9 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/heart-disease-repo/heart-disease-api:${{ github.sha }} .
+            -f api/Dockerfile \
+            -t asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/heart-disease-repo/heart-disease-api:${{ github.sha }} \
+            ./api
 
       - name: Push Docker image
         run: |
@@ -46,8 +45,8 @@ jobs:
 
       - name: Deploy to GKE
         run: |
+          kubectl apply -f k8s/deployment.yaml
           kubectl set image deployment/heart-disease-api \
             heart-disease-api=asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/heart-disease-repo/heart-disease-api:${{ github.sha }}
-
           kubectl apply -f k8s/service.yaml
           kubectl apply -f k8s/hpa.yaml
